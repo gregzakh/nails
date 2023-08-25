@@ -1,5 +1,5 @@
 <#
- # Retrieving Windiws system calls.
+ # Retrieving Windows system calls.
  #>
 using namespace System.Runtime.InteropServices
 
