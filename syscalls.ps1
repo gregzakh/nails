@@ -38,21 +38,29 @@ $GetDllExports = {
   }
 }
 
-if ([IntPtr]::Size -ne 8) {
-  Write-Warning 'this PoC required x64 Windows.'
-  return
-}
-
+<#
+ # x64
+ # =====
+ # 4c 8b d1         mov  r10, rcx
+ # b8 xx xx xx xx   mov  eax, [syscall value]
+ # ...
+ # 0f 05            syscall
+ # c3               retn  ; [Marshal]::ReadByte($_.Address, 20) -eq 0xC3
+ #
+ # x86 (WOW64)
+ # =====
+ # b8 xx xx ?? ??   mov  eax, [syscall value]
+ # ...
+ # ff d2            call edx
+ # c2 ?? ??         ret  [value]
+ #>
+$bits = ($sz = [IntPtr]::Size) * 4
+$diff = $sz -eq 8 ? ('Int32', 0xB8D18B4C, 4) : ('Byte', 0xB8, 1)
 $GetDllExports.Invoke('ntdll').Where{$_.Name.StartsWith('Nt')}.ForEach{
-  # 4c 8b d1         mov  r10, rcx
-  # b8 xx xx xx xx   mov  eax, [syscall number]
-  # ...
-  # 0f 05            syscall
-  # c3               retn  ; [Marshal]::ReadByte($_.Address, 20) -eq 0xC3
-  if ([Marshal]::ReadInt32($_.Address) -eq  0xB8D18B4C) {
+  if ([Marshal]::"Read$($diff[0])"($_.Address) -eq $diff[1]) {
     [PSCustomObject]@{
       Name = $_.Name # SCH is hexadecimal representation of syscall value
-      SCH = '{0:X3}' -f ($sc = [Marshal]::ReadInt32($_.Address, 4))
+      SCH = '{0:X3}' -f ($sc = [Marshal]::"ReadInt$($bits)"($_.Address, $diff[2]))
       SysCall = $sc
     }
   }
