@@ -1,3 +1,6 @@
+/*
+ * Detecting if the current process is running under a debugger.
+ */
 #include <intrin.h>
 #include <cstdio>
 #include <cstdint>
